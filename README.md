@@ -6,10 +6,10 @@ An Android application for bulk importing contacts from a CSV file using ADB.
 - Import contacts from a CSV file.
 - Supported CSV format:
   ```
-  Name,Phone,isNew
-  Hanna,+34 444 333 444,0
-  Tor,+34 222 222 222,1
-  God,+34 111 11 11 11,0
+  Name,Phone
+  Hanna,+34 444 333 444
+  Tor,+34 222 222 222
+  God,+34 111 11 11 11
   ```
 - Creates local phone contacts (`account_type=null`) similar to manually created ones.
 - Normalizes phone numbers (stores a clean version in `data4`).

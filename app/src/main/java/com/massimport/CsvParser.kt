@@ -3,10 +3,10 @@ package com.massimport
 import java.io.File
 import android.util.Log
 
-data class ContactEntry(val name: String, val phone: String, val isNew: Boolean)
+data class ContactEntry(val name: String, val phone: String)
 
 object CsvParser {
-    fun parse(filePath: String): List<ContactEntry> {
+    fun parse(filePath: String, delimiter: String = ","): List<ContactEntry> {
         val file = File(filePath)
         if (!file.exists()) {
             Log.e("CsvParser", "File not found: $filePath")
@@ -24,26 +24,26 @@ object CsvParser {
 
         return lines.drop(1).mapNotNull { line ->
             val cleanLine = line.trim().replace("\r", "")
-            Log.d("CsvParser", "Parsing line: '$cleanLine'")
-
             if (cleanLine.isEmpty()) {
-                Log.e("CsvParser", "Skipping empty line")
-                null
-            } else {
-                val parts = cleanLine.split(",", ";").map { it.trim() }
-                Log.d("CsvParser", "Parts: $parts")
-
-                if (parts.size < 3) {
-                    Log.e("CsvParser", "Invalid line format: $cleanLine")
-                    null
-                } else {
-                    val name = parts[0]
-                    val phone = parts[1]
-                    val isNew = parts[2] == "1"
-                    ContactEntry(name, phone, isNew)
-                }
+                Log.w("CsvParser", "Skipping empty line")
+                return@mapNotNull null
             }
+
+            val parts = cleanLine.split(delimiter).map { it.trim() }
+            if (parts.size < 2) {
+                Log.e("CsvParser", "Invalid line format: $cleanLine")
+                return@mapNotNull null
+            }
+
+            val name = parts[0]
+            val phone = parts[1]
+
+            if (name.isEmpty() || phone.isEmpty()) {
+                Log.w("CsvParser", "Skipping line with empty fields: $cleanLine")
+                return@mapNotNull null
+            }
+
+            ContactEntry(name, phone)
         }
     }
 }
-
