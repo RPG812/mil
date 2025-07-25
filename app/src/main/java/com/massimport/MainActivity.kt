@@ -1,21 +1,47 @@
 package com.massimport
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
 
-class MainActivity : Activity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val path = intent.getStringExtra("path")
-        Log.d("MainActivity", "Launching ImportService with path=$path")
+        val stopFlag = intent.getBooleanExtra("stop", false)
+        val csvPath = intent.getStringExtra("path")
 
-        val serviceIntent = Intent(this, ImportService::class.java)
-        serviceIntent.putExtra("path", path)
-        startService(serviceIntent)
+        if (stopFlag) {
+            Log.d("MassImport", "Stopping all import tasks (explicit stop)")
+            WorkManager.getInstance(applicationContext).cancelAllWork()
+        } else if (!csvPath.isNullOrEmpty()) {
+            Log.d("MassImport", "Received path: $csvPath")
+
+            WorkManager.getInstance(applicationContext).cancelAllWork()
+
+            startUniqueImport(csvPath)
+        } else {
+            Log.e("MassImport", "No path provided to MainActivity")
+        }
 
         finish()
+    }
+
+    private fun startUniqueImport(csvPath: String) {
+        val data = workDataOf("path" to csvPath)
+
+        val request = OneTimeWorkRequestBuilder<ImportWorker>()
+            .setInputData(data)
+            .build()
+
+        WorkManager.getInstance(applicationContext).enqueueUniqueWork(
+            "import_contacts",
+            ExistingWorkPolicy.REPLACE,
+            request
+        )
     }
 }
